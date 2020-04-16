@@ -45,8 +45,30 @@ static NSString *baseURLString = @"https://earthquake.usgs.gov/fdsnws/event/1/qu
         
         NSLog(@"URL: %@", url);
         
+        // Errors
+        if (error) {
+            completionBlock(nil, error);
+            return;
+        }
         
+        if (!data) {
+            NSError *dataError = errorWithMessage(@"No data in URL response for quakes", LSIDataNilError);
+            completionBlock(nil, dataError);
+            return;
+        }
         
+        NSError *jsonError = nil;
+        NSDictionary *jsonDictionary = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
+        
+        if (jsonError) {
+            completionBlock(nil, jsonError);
+            return;
+        }
+        
+        LSIQuakeResults *quakeResults = [[LSIQuakeResults alloc] initWithDictionary:jsonDictionary];
+        completionBlock(quakeResults.quakes, nil);
+        
+        // call completion handlers
     }];
     
     [task resume];
